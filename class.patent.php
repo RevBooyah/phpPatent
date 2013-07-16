@@ -39,8 +39,8 @@ class Patent {
 	public $filedDateSec; // Date filed in unix time (seconds)
 	public $inventors; // inventors
 	public $inventorsList; // Array of inventors
-	public $assignee; // Array of inventors
-	public $familyID; // Array of inventors
+	public $assignee; // Assignee of patent (if any)
+	public $familyID; // ID of the family of patents.
 	public $applNo; // The application number
 	public $appNumber;
 	public $currentUSClass;
