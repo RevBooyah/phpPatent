@@ -29,19 +29,19 @@ define("PATENT_DIR","/tmp/");
  **/
 class Patent {
 
-	public $patentNumber;
-	public $intPatentNumber;
-	public $title;
-	public $issueDate;
-	public $issueDateSec;
+	public $patentNumber; // The patent number - originally a string, now converted to int automatically
+	public $intPatentNumber; // The integer value of the patent number
+	public $title; // The title of the patent
+	public $issueDate; // Date issued in readable format
+	public $issueDateSec; // Date issued in unix time (seconds)
 	public $filingDate;
-	public $filedDate;
-	public $filedDateSec;
+	public $filedDate; // Date filed in readable format
+	public $filedDateSec; // Date filed in unix time (seconds)
 	public $inventors; // inventors
 	public $inventorsList; // Array of inventors
 	public $assignee; // Array of inventors
 	public $familyID; // Array of inventors
-	public $applNo; // Array of inventors
+	public $applNo; // The application number
 	public $appNumber;
 	public $currentUSClass;
 	public $currentIntClass;
@@ -54,12 +54,12 @@ class Patent {
 	public $txtGovInterests;
 	public $txtPatentCase;
 	public $txtParentCase;
-	public $txtClaims;
+	public $txtClaims; 	// The claims section (with html intact)
 	public $txtDescription;
 	public $applicant;
 	public $nameCityStateCountryType;
 	public $htmlPage;
-	public $rawText;
+	private $rawText; // htmlPage with the html stripped - used in clustering
 
 	private $logging; // 0=no logging/printing => 5=full logging
 
@@ -89,6 +89,7 @@ class Patent {
 
 	/**
 	 * Fetch the patent from the USPTO site and put it into htmlPage
+	 * @return bool true on success, false on failure
 	 **/
 	public function fetchPatent() {
 		if(intval($this->patentNumber)<1) {
@@ -116,7 +117,16 @@ class Patent {
 	        curl_setopt($ch, CURLOPT_HEADER, 0);
 	        $this->htmlPage=curl_exec($ch);
 	        $this->rawText=strip_tags($this->htmlPage);
+		if(curl_errno($ch)){
+			echo "Fetch Failed!\nError: ".curl_error($ch);
+			return(false);
+		}
 	        curl_close($ch);
+		if(strlen($this->htmlPage)<100) {
+			echo "Fetch/Page Error. Page is too short.\n";
+			return(false);
+		}
+		return(true);
 	}
 
 
@@ -257,7 +267,10 @@ class Patent {
 	}
 }
 
+/* Example Usage: */
+/*
 $p=new Patent("5,881,811",1);
 $p->fetchPatent();
 $p->parse();
 print_r($p);
+*/
