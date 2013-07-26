@@ -14,10 +14,10 @@
 namespace phpPatent;
 
 /**
- *  * @type string This is the url for the single patent at the USPTO.gov site. Patent number is inserted at <PATENT_NUMBER>
+ *  * @type string This is the url for the search results page at the USPTO.gov site. Pages begin at 1 and go to total count/50 
  *   **/
-define("SURL","http://patft.uspto.gov/netacgi/nph-Parser?Sect2=PTO1&Sect2=HITOFF&p=1&u=%2Fnetahtml%2FPTO%2Fsearch-bool.html&r=1&f=G&l=50&d=PALL&RefS
-	rch=yes&Query=PN%2F<PATENT_NUMBER>");
+define("SURL","http://patft.uspto.gov/netacgi/nph-Parser?Sect1=PTO2&Sect2=HITOFF&u=%2Fnetahtml%2FPTO%2Fsearch-adv.htm&r=0&f=S&l=50&d=PTXT&OS=<SEARCH_QUERY>&RS=<SEARCH_QUERY>&Query=<SEARCH_QUERY>&TD=968&Srch1=amazon.ASNM.&NextList<PAGENUM>=Next+50+Hits");
+
 
 /**
  * @type string This is where to store the downloaded patent results file
@@ -40,10 +40,19 @@ class PatentSearch {
 	 **/
 	public $searchResults;
 
+	/**
+	 * Raw HTML from current page.
+	 **/
+	public $curHtml;
+
 	public $numMatches; // Integer amount of matched patents.
+	public $totalResults; // Total results as listed by the results page.
 
 	public function __construct() {
 		$this->searchTerms=array();
+		$this->totalResults=0;
+		$this->numMatches=0;
+		$this->curHtml='';
 	}
 
 
@@ -58,6 +67,17 @@ class PatentSearch {
 	}
 
 
+	public function fetchTotalCount() {
+		if(strlen($this->curHtml)<10) {
+			return(0);
+		}
+		preg_match("/strong> out of <strong>(\d+)<\/strong>/",$this->curHtml,$m);
+		print_r($m);
+		if(!isset($m[1])) {
+			return(0);
+		}
+		return(intval($m[1]));
+	}
 	/**
 	 * Just list out the known search modifiers
 	 **/
