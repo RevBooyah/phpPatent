@@ -14,22 +14,21 @@
 namespace phpPatent;
 
 /**
- *  * @type string This is the url for the search results page at the USPTO.gov site. Pages begin at 1 and go to total count/50 
- *   **/
-define("SURL","http://patft.uspto.gov/netacgi/nph-Parser?Sect1=PTO2&Sect2=HITOFF&u=%2Fnetahtml%2FPTO%2Fsearch-adv.htm&r=0&f=S&l=50&d=PTXT&OS=<SEARCH_QUERY>&RS=<SEARCH_QUERY>&Query=<SEARCH_QUERY>&TD=968&Srch1=amazon.ASNM.&NextList<PAGENUM>=Next+50+Hits");
-
-
-/**
  * @type string This is where to store the downloaded patent results file
  **/
 define("PATENT_RESULT_DIR","/tmp/");
-
 
 /**
  * Performs searches and stores list of patent numbers of matching results
  **/
 class PatentSearch {
 
+	/**
+	 * The URL to search - with replacement "tags" in place.
+	 * "<SEARCH_QUERY> gets replaced with url safe search terms
+	 * <PAGENUM> is the multiple of 50 patents =>  ((Page-1)*50)+1 -> Page*50
+ 	 **/
+	const SURL = 'http://patft.uspto.gov/netacgi/nph-Parser?Sect1=PTO2&Sect2=HITOFF&u=%2Fnetahtml%2FPTO%2Fsearch-adv.htm&r=0&f=S&l=50&d=PTXT&OS=<SEARCH_QUERY>&RS=<SEARCH_QUERY>&Query=<SEARCH_QUERY>&TD=968&Srch1=amazon.ASNM.&NextList<PAGENUM>=Next+50+Hits';
 	/**
 	 * An array of search modifiers and values
 	 **/
