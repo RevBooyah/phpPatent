@@ -16,7 +16,12 @@ namespace phpPatent;
 /**
  * @type string This is where to store the downloaded patent results file
  **/
-define("PATENT_RESULT_DIR","/tmp/");
+define("PATENT_RESULT_DIR","/tmp/patents/");
+
+/**
+ * @type string File to store the CSV file of matching patents.
+ **/
+define("SEARCH_RESULT_FILE","/tmp/patents.dat");
 
 /**
  * Performs searches and stores list of patent numbers of matching results
@@ -96,6 +101,9 @@ class PatentSearch {
 		$this->searchTerms[$mod]=$val;
 	}
 
+	/**
+	 * List out the terms of the search.
+	 **/
 	public function listTerms($mod,$val) {
 		foreach($this->searchTerms as $k=>$v) {
 			print(" $k => $v\n");
@@ -104,6 +112,9 @@ class PatentSearch {
 
 
 
+	/**
+	 * Perform the patent search and retrieve all matching patent numbers from the USPTO site.
+	 **/
 	public function performSearch() {
 		// Verify there are terms.
 		if(count($this->searchTerms)<1) {
@@ -229,6 +240,59 @@ class PatentSearch {
 		}
 		return(intval($m[1]));
 	}
+
+	/**
+	 * Write the output list of patents. 
+	 **/
+	public function writeSearchResults($fname=SEARCH_RESULT_FILE) {
+		// If no results, don't even overwrite the file...
+		if(count($this->searchResults)<1) {
+			echo "No search results. Not writing results file ($fname).\n";
+			return(false);
+		}
+		if(!$fp=fopen($fname,"w")) {
+			echo "Could not open file to write: $fname\n";
+			return(false);
+		}
+		$cnt=0;
+		foreach($this->searchResults as $val) {
+			if(fwrite($fp,$val."\n") === false) {
+				echo "Could not write to file. ($fname)\n";
+				return(false);
+			}
+			$cnt++;
+		}
+		fclose($fp);
+		echo "Wrote $cnt results to file $fname\n";
+		return(true);
+	}
+
+	/**
+	 * Get a list of patents from a file. This can be used if the search is already completed.
+	 **/
+	public function readSearchResults($fname=SEARCH_RESULT_FILE) {
+		if(!file_exists($fname)) {
+			echo "Unable to open file $fname!\n";
+			return(false);
+		}
+		$f=file($fname);
+		if(count($f)<1) {
+			echo "Nothing in the file $fname\n";
+			return(0);
+		}
+		$this->searchResults=array();
+		// Loop through the entries and remove the trailing newline
+		foreach($f as $val) {
+			$this->searchResults[]=trim($val);
+		}
+		$this->numMatches=count($this->searchResults);
+		$this->totalResults=count($this->searchResults);
+		return($this->numMatches);// Return the number of matches.
+	}
+
+
+
+
 	/**
 	 * Just list out the known search modifiers
 	 **/

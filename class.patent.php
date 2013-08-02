@@ -22,7 +22,7 @@ define("PURL","http://patft.uspto.gov/netacgi/nph-Parser?Sect2=PTO1&Sect2=HITOFF
 /**
  * @type string This is where to store the downloaded patent html file
  **/
-define("PATENT_DIR","/tmp/");
+define("PATENT_DIR","/tmp/patents/");
 
 /**
  * Primary patent class that stores all infomation about a single patent.
@@ -73,11 +73,13 @@ class Patent {
 	public function __construct($patentNumber="",$logging=1) {
 		if(strlen("$patentNumber")>0) {
 			// In case they left the commas in the string
-			$this->patentNumber=intval(str_replace(",","",$patentNumber));
+			// Had to change the below line because patent numbers can have letters...
+			//$this->patentNumber=intval(str_replace(",","",$patentNumber));
+			$this->patentNumber=str_replace(",","",$patentNumber);
 		} else {
 			$this->patentNumber=0;
 		}
-		if($this->patentNumber<1) {
+		if(strlen($this->patentNumber)<4) {
 			$this->patentNumber=0;
 		}
 
@@ -149,6 +151,9 @@ class Patent {
 
 
 
+	/**
+	 * Parse through the patents various classes (not programming language objects ;)
+	 **/
 	private function parseClasses() {
 		//Easiest to split the document up by tables 
 		foreach($this->aTables[1] as $k=>$v) {
@@ -183,7 +188,8 @@ class Patent {
 	}
 
 	private function parsePatentNumber() {
-		preg_match('/\d,\d\d\d,\d\d\d/',$this->aTables[1][2],$out);
+		//preg_match('/\d,\d\d\d,\d\d\d/',$this->aTables[1][2],$out);
+		preg_match('/[REPD\d,]+/i',$this->aTables[1][2],$out); // Changed to handle Re, P, and D patents
 		if(isset($out[0])) {
 			$this->patentNumber=$out[0]; // sets it to what it read - WARNING: COULD OVERWRITE CALLED NUMBER!!!
 			$this->intPatentNumber=intval(trim(str_replace(",","",$this->patentNumber)));
@@ -265,6 +271,73 @@ class Patent {
 		}
 	
 	}
+
+
+	public function writePatentFile($isSerial=false,$fname='') {
+		// Generate a filename
+		if($fname=="") {
+			if(!$this->checkDir(PATENT_DIR)) return(false);
+			$fname=PATENT_DIR.$this->patentNumber;
+			$ext=($isSerial)?".dat":".html";
+			$fname=$fname.$ext;	
+		}
+		if($isSerial) {
+			$out=serialize($this);
+		} else {
+			$out=$this->htmlPage;
+		}
+		if(!$fp=fopen($fname,"w")) {
+			echo "Could not open patent file to write: $fname\n";
+			return(false);
+		}
+		if(fwrite($fp,$out)===false) {
+			echo "Writing patent failed to $fname.	\n";
+			return(false);
+		}
+		fclose($fp);
+		return(true);
+	}
+
+
+	public function readPatentFile($isSerial=false,$fname='',$doParse=true) {
+		if($fname=="") {
+			if(!$this->checkDir(PATENT_DIR)) return(false);
+			$fname=PATENT_DIR.$this->patentNumber;
+			$ext=($isSerial)?".dat":".html";
+			$fname=$fname.$ext;	
+		}
+		if(!is_file($fname)) {
+			echo "That file does not exist: $fname\n";
+			return(false);
+		}
+
+		$f=file_get_contents($fname);
+		if(!$isSerial) {
+			$this->htmlPage=$f;
+			if($doParse) {
+	        		$this->rawText=strip_tags($this->htmlPage);
+				$this->parse();
+			}
+		} else {
+			$ser=unserialize($f);
+			//foreach($ser
+			// HERE IS WHERE TO CONVERT SERIAL OBJECT TO CURRENT OBJECT.
+		}
+	}
+
+	/**
+	 * Check to see if the output directory exists. Doesn't recursively create needed dirs!
+	 **/
+	private checkDir($dir=PATENT_DIR) {
+		if(!is_dir($dir)) {
+			if(!mkdir($dir)) {
+				echo "Could not create directory:  $dir\n";
+				return(false);
+			}
+		}
+		
+	}
+
 }
 
 /* Example Usage: */
