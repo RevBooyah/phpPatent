@@ -94,7 +94,7 @@ class Patent {
 	 * @return bool true on success, false on failure
 	 **/
 	public function fetchPatent() {
-		if(intval($this->patentNumber)<1) {
+		if(strlen($this->patentNumber)<1) {
 			print("You must include a patent number when fetching a patent.\n");
 			print("Fatal Error. Exiting.\n");
 			exit();
@@ -110,10 +110,10 @@ class Patent {
 
 		// create the url using the patent number
 		$url=str_replace("<PATENT_NUMBER>",$this->patentNumber,PURL);
-	        if($logging>0) print("Fetching Patent $this->patentNumber at $url\n");
+	        if($this->logging>0) print("Fetching Patent $this->patentNumber at $url\n");
         	$ch=curl_init($url);
 		curl_setopt($ch, CURLOPT_URL, $url);
-		curl_setopt($ch, CURLOPT_REFERER, "phpPatent class");
+		//curl_setopt($ch, CURLOPT_REFERER, "phpPatent class");
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 120); // Lots of time because USPTO can be slow sometimes
 	        curl_setopt($ch, CURLOPT_HEADER, 0);
@@ -281,6 +281,7 @@ class Patent {
 			$ext=($isSerial)?".dat":".html";
 			$fname=$fname.$ext;	
 		}
+		if($this->logging>0) print("Writing file:$fname\n");
 		if($isSerial) {
 			$out=serialize($this);
 		} else {
@@ -295,6 +296,7 @@ class Patent {
 			return(false);
 		}
 		fclose($fp);
+		if($this->logging>0)print("Wrote ".strlen($out)." chars to $fname\n");
 		return(true);
 	}
 
@@ -328,14 +330,14 @@ class Patent {
 	/**
 	 * Check to see if the output directory exists. Doesn't recursively create needed dirs!
 	 **/
-	private checkDir($dir=PATENT_DIR) {
+	private function checkDir($dir=PATENT_DIR) {
 		if(!is_dir($dir)) {
 			if(!mkdir($dir)) {
 				echo "Could not create directory:  $dir\n";
 				return(false);
 			}
 		}
-		
+		return(true);	
 	}
 
 }

@@ -21,14 +21,14 @@ $s->addTerm("IS",'AZ');  // Searches for all patents with Invention State as "AZ
 
 
 
-//$s->performSearch();
-//$s->writeSearchResults(); // use the default file location (/tmp/patents.dat)
+$s->performSearch();
+$s->writeSearchResults(); // use the default file location (/tmp/patents.dat)
 
 // if you already saved the search and just want to get the list from the file
-$s->readSearchResults();
+//$s->readSearchResults();
 
 //print out the list of results if so desired...
-print_r($s->searchResults);
+//print_r($s->searchResults);
 
 // Now to fetch the patent pages and store them
 foreach($s->searchResults as $k=>$v) {
