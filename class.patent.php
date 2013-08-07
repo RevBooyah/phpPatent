@@ -91,9 +91,10 @@ class Patent {
 
 	/**
 	 * Fetch the patent from the USPTO site and put it into htmlPage
+	 * @param bool Force the fetch from USPTO. If false and file exists locally, don't refetch.
 	 * @return bool true on success, false on failure
 	 **/
-	public function fetchPatent() {
+	public function fetchPatent($force=false) {
 		if(strlen($this->patentNumber)<1) {
 			print("You must include a patent number when fetching a patent.\n");
 			print("Fatal Error. Exiting.\n");
@@ -107,6 +108,18 @@ class Patent {
 			exit();
 		}
 
+		// If it's not a forced fetch, and the patent file is already written, fetch from file instead
+		$fname=PATENT_DIR.$this->patentNumber.".html"; // doesn't work with serialized yet.
+		if(false==$force && file_exists($fname)) {
+	        	if($this->logging>0) print("Fetching Patent $this->patentNumber at LOCAL: $fname\n");
+			$this->htmlPage=file_get_contents($fname);
+			$this->rawText=strip_tags($this->htmlPage);
+			if(strlen($this->htmlPage)<100) {
+				echo "Fetch/Page Error. Local page is too short.\n";
+				return(false);
+			}
+			return(true);
+		}
 
 		// create the url using the patent number
 		$url=str_replace("<PATENT_NUMBER>",$this->patentNumber,PURL);
