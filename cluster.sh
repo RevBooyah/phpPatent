@@ -30,3 +30,11 @@ mahout clusterdump -d sparse/dictionary.file-0 -dt sequencefile -i kmeans-cluste
 
 # Generate the clusterdump CSV output and put it in cdump.csv
 mahout clusterdump -d sparse/dictionary.file-0 -dt sequencefile -i kmeans-clusters/clusters-2-final/part-r-00000 -n 20 -b 100 -o cdump.csv -p kmeans-clusters/clusteredPoints/ -of CSV
+
+
+## This part is for doing a similarity/recomender
+#mahout rowid -i sparse/tfidf-vectors/part-r-00000 -o patent-matrix
+#mahout rowsimilarity -i patent-matrix/matrix -o patent-similarity -r 197291 --similarityClassname SIMILARITY_COSINE -m 10 -ess
+# -r is the number of rows resulting from the previous rowid command
+#mahout seqdumper -i patent-matrix/matrix | more
+# The key/id's for the seqdumper are in patent/matric/docIndex
