@@ -59,11 +59,17 @@ class Patent {
 	public $applicant;
 	public $nameCityStateCountryType;
 	public $htmlPage;
-	private $rawText; // htmlPage with the html stripped - used in clustering
 
-	private $logging; // 0=no logging/printing => 5=full logging
+	public $_id; 	// For MongoDB insertion id 
+	public $rawText; // htmlPage with the html stripped - used in clustering
 
-	private $aTables; // Internal list of table html for parsing;
+	public $logging; // 0=no logging/printing => 5=full logging
+
+	public $aTables; // Internal list of table html for parsing;
+
+	const DB_SERVER = 'localhost';
+	const DB_NAME = 'TWB_Patents';
+	const DB_COLLECTION = 'patent';
 	
 	/**
 	 * Class constructor.
@@ -167,7 +173,7 @@ class Patent {
 	/**
 	 * Parse through the patents various classes (not programming language objects ;)
 	 **/
-	private function parseClasses() {
+	public function parseClasses() {
 		//Easiest to split the document up by tables 
 		foreach($this->aTables[1] as $k=>$v) {
 			if(strpos($v,"Class:")>0) {
@@ -200,7 +206,7 @@ class Patent {
 		}
 	}
 
-	private function parsePatentNumber() {
+	public function parsePatentNumber() {
 		//preg_match('/\d,\d\d\d,\d\d\d/',$this->aTables[1][2],$out);
 		preg_match('/[REPD\d,]+/i',$this->aTables[1][2],$out); // Changed to handle Re, P, and D patents
 		if(isset($out[0])) {
@@ -210,14 +216,14 @@ class Patent {
 	}
 
 
-	private function parseIssueDate() {
+	public function parseIssueDate() {
 		preg_match_all('/<TD ALIGN="RIGHT" WIDTH="50%">(.*)<\/TD>/Uis',$this->aTables[1][2],$out);
 		$this->issueDate=(trim(strip_tags($out[1][1])));
 		$this->issueDateSec=strtotime($this->issueDate." 12:00:00"); // Sets it to noon - no time given
 	}
 
 
-	private function parseSections() {
+	public function parseSections() {
 		// Split the html document up by sections (marked by the <HR>'s the page has)
 		$htab=explode("<HR>",$this->htmlPage);
 		// Get the title and the abstract
@@ -286,6 +292,40 @@ class Patent {
 	}
 
 
+	public function savePatent($dbtype='MongoDB') {
+
+		switch($dbtype) {
+			case 'MongoDB':
+				// Could use a singleton here (will if I add mysql support). Mongo php driver
+				// already has connection pooling built in, so not entirely necessary for this app.
+				$conn	=	new \Mongo(self::DB_SERVER);
+				$db 	= 	$conn->selectDB(self::DB_NAME);
+				$coll 	= 	$db->selectCollection(self::DB_COLLECTION);
+
+				if(!isset($this->_id->{'$id'})) $this->_id=new \MongoId();
+				$insertOpt = array("w"=>1,'fsync'=>true); // Force driver to wait for mongodb to return with result
+				// Do the insertion. or Upser
+				//$out=$coll->insert($this,$insertOpt);
+				$out=$coll->insert($this);
+				if($out['ok']!=1) {
+					print("DB Write Error: $out[errmsg]\n");
+				}
+			break;
+			default:
+				print("Unknown db type: $dbtype\n");
+			return(false);
+		}		
+
+	}
+
+
+	public function loadPatent($pid='',$dbtype='MongoDB') {
+		
+
+
+	}
+
+
 	public function writePatentFile($isSerial=false,$fname='') {
 		// Generate a filename
 		if($fname=="") {
@@ -343,7 +383,7 @@ class Patent {
 	/**
 	 * Check to see if the output directory exists. Doesn't recursively create needed dirs!
 	 **/
-	private function checkDir($dir=PATENT_DIR) {
+	public function checkDir($dir=PATENT_DIR) {
 		if(!is_dir($dir)) {
 			if(!mkdir($dir)) {
 				echo "Could not create directory:  $dir\n";
